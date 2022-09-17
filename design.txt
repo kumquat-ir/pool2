@@ -1,0 +1,103 @@
+pool 2 electric boogaloo - a horrible esolang
+
+programs consist of the "table" and the initial stacks of balls
+
+(random bullshit.pool2)
+0>dsklflsfj
+1>fjiegjo
+e/ja
+v/hea
+--UR
+
+/-v-----\
+|  1    |
+| o   0 |
+\----e--/
+
+begins with:
+description of stacks prefixed by their name and `>`
+description of holes prefixed by their name and `/`
+finally, initial direction of the cue ball prefixed by `--`
+by default, the cue ball is initalized as `o>c`, but this can be overridden by assigning something to `o`
+names must be one character
+runs as a simulation of balls colliding with walls, stacks, other balls, and holes
+walls are `/-\|` and do not have to form a rectangle
+stacks are initialized with the type of each ball in them
+holes are initialized with a list of instructions
+each ball type has different behavior (storing a value, weird collision stuff, ask input, etc)
+each hole instruction has different behavior (output, modify ball state, nothing, etc)
+balls falling off the table due to holes in walls are simply lost
+
+BALL TYPES:
+c  this is the cue ball. there must be exactly one cue ball
+   must be placed at the bottom of stack
+   starts the whole simulation
+o  does nothing
+n  upon beginning to move, read an int from stdin and store its value
+   restarting movement counts!
+t  upon beginning to move, read a string from stdin and store its value
+i  stores an int, starts as 0
+s  stores a string, starts as ""
+
+~special~
+|  not a ball, indicates the point where the stack should repeat from
+
+HOLE INSTRUCTIONS:
+x  destroys the ball
+o  outputs the value stored in the ball, if any
+c  outputs the value stored in the ball as a string
+   ints are converted to unicode chars, with no newline
+
+d  takes a directional argument
+   clones the ball, emitting it in the given direction
+
+i  takes a directional argument
+   if the ball has an int value, redirects if >0
+   if the ball has a string value, redirects if empty
+
+~math~
+   math instructions only affect balls with an int stored in them
++  increment
+-  decrement
+0  set to zero
+s  square, but preserving sign
+!  invert sign
+8  add 8
+
+~strings~
+   string instructions only affect balls with a string stored in them
+p  takes a directional argument
+   pops first character of string and emits an int ball in the given direction
+
+~collision behavior~
+   only one collision behavior instruction can exist on a hole, later ones override earlier ones
+   otherwise, the hole has no collision
+b  reflects the ball as if it collided with another ball
+/  reflects the ball is if it collided with the appropriate wall
+_  ''
+\  ''
+|  ''
+
+~redirection~
+   probably has weird behavior when combined with collision
+?  redirects balls to a random direction
+:  takes an argument of a direction (L, D, UR, etc)
+   redirects balls to the given direction
+
+COLLISION STUFF:
+normal collision stuff, balls move at a fixed speed and bounce perfectly
+collisions occur when things overlap
+balls can only move in 8 directions
+balls are considered to have an octagonal hitbox
+if 2 balls collide head-on, they stop
+ball > stopped ball/stack will reflect the moving ball and start the other in the direction the first was moving
+balls colliding with the short edge of a wall are stopped
+holes are not by default collision objects, but can be if their instructions say so
+
+
+ORDER:
+move balls
+process ball-collider collision
+(repeat until no ball-collider collision)
+process ball-ball collision
+spawn new balls (if necessary)
