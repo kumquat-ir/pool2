@@ -33,9 +33,8 @@ c  this is the cue ball. there must be exactly one cue ball
    must be placed at the bottom of stack
    starts the whole simulation
 o  does nothing
-n  upon beginning to move, read an int from stdin and store its value
-   restarting movement counts!
-t  upon beginning to move, read a string from stdin and store its value
+n  upon spawning, read an int from stdin and store its value
+t  upon spawning, read a string from stdin and store its value
 i  stores an int, starts as 0
 s  stores a string, starts as ""
 
@@ -60,7 +59,7 @@ i  takes a directional argument
 +  increment
 -  decrement
 0  set to zero
-s  square, but preserving sign
+s  square
 !  invert sign
 8  add 8
 

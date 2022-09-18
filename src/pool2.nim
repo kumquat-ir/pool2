@@ -304,6 +304,18 @@ proc move(ball: Ball) =
     inc ball.pos[0]
     inc ball.pos[1]
 
+proc rotDir(dir: Direction, steps: int): Direction =
+  var ndir = dir.int
+  ndir += steps
+  if ndir > Direction.high.int:
+    ndir = ndir mod Direction.high.int
+  return ndir.Direction
+
+template revDir(dir: Direction): Direction = rotDir(dir, 4)
+
+proc isPerpDir(d1, d2: Direction): bool =
+  d1.rotDir(2) == d2 or d2.rotDir(2) == d1
+
 proc collideDir(col: CollideType, ball: Direction): Direction =
   case col:
   of N:
@@ -327,18 +339,38 @@ proc collideDir(col: CollideType, ball: Direction): Direction =
     of DR: return DL
     of DL: return DR
   of F:
-    discard
+    case ball:
+    of UR, DL, S: return S
+    of UL: return DR
+    of DR: return UL
+    of R: return U
+    of U: return R
+    of L: return D
+    of D: return L
   of B:
-    discard
+    case ball:
+    of UL, DR, S: return S
+    of UR: return DL
+    of DL: return UR
+    of R: return D
+    of U: return L
+    of L: return U
+    of D: return R
   of O:
-    var ndir = ball.int
-    ndir += 4
-    if ndir > Direction.high.int:
-      ndir = ndir mod Direction.high.int
-    return ndir.Direction
+    return revDir(ball)
 
 template collideDir(col: Collider, ball: Ball): Direction =
   collideDir(col.ct, ball.dir)
+
+proc ballCollideDir(b1, b2: Direction): (Direction, Direction) =
+  if b1 == b2:
+    return (b1, b2)
+  elif revDir(b1) == b2:
+    return (S, S)
+  elif isPerpDir(b1, b2):
+    return (b2, b1)
+  else: # could be better
+    return (revDir(b1), revDir(b2))
 
 proc cullBalls(table: var PTable) =
   var i = 0
@@ -391,12 +423,10 @@ method onCollide(hole: Hole, ball: Ball, table: var PTable) =
       elif ball of StrBall:
         stdout.write($ball.StrBall.val)
     of Clone:
-      # TODO test
       var nball = deepCopy ball
       nball.dir = instr.dir
       table.toSpawn.add(nball)
     of If:
-      # TODO test
       if ball of IntBall and ball.IntBall.val > 0:
         ball.dir = instr.dir
       elif ball of StrBall and ball.StrBall.val.len <= 0:
@@ -420,7 +450,6 @@ method onCollide(hole: Hole, ball: Ball, table: var PTable) =
       if ball of IntBall:
         ball.IntBall.val += 8
     of Pop:
-      # TODO test
       if ball of StrBall:
         table.toSpawn.add(IntBall(dir: instr.dir, pos: hole.pos, val: ball.StrBall.val.runeAt(0).int))
         ball.StrBall.val.removePrefix($ball.StrBall.val.runeAt(0))
@@ -445,7 +474,6 @@ proc simulate(table: var PTable) =
     table.cullBalls()
 
     # process colliders
-    # TODO
     var i = 0
     var gotCollide = false
     while i < table.colliders.len:
@@ -466,7 +494,16 @@ proc simulate(table: var PTable) =
         gotCollide = false
 
     # process ball collision
-    # TODO
+    i = 0
+    while i < table.balls.len:
+      var j = i + 1
+      while j < table.balls.len:
+        if table.balls[i].pos[0] == table.balls[j].pos[0] and table.balls[i].pos[1] == table.balls[j].pos[1]:
+          let bcd = ballCollideDir(table.balls[i].dir, table.balls[j].dir)
+          table.balls[i].dir = bcd[0]
+          table.balls[j].dir = bcd[1]
+        inc j
+      inc i
 
     # spawn balls
     for ball in table.toSpawn:
